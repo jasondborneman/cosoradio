@@ -6,10 +6,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"time"
 
 	spotify "github.com/jasondborneman/cosoradio/Spotify"
-	"github.com/mpvl/unique"
+	tools "github.com/jasondborneman/cosoradio/Tools"
 )
 
 func ReadSongsFromFixture() ([]spotify.Song, error) {
@@ -35,30 +34,8 @@ func GetSongsFromCoSo() ([]spotify.Song, error) {
 	return nil, errors.New("GetSongsFromCoSo: Not Yet Implemented")
 }
 
-func TootSongs(spotifyPlaylist string, songs []spotify.Song) error {
-	t := time.Now()
-	dateString := t.Format("01-02-2006")
-	var uniqueRecommenders []string
-	for _, recommendedBy := range songs {
-		uniqueRecommenders = append(uniqueRecommenders, recommendedBy.RecommendedBy)
-	}
-	unique.Strings(&uniqueRecommenders)
-	recommendersString := ""
-	moreThanFive := false
-	for i, recommendedBy := range uniqueRecommenders {
-		if i > 5 {
-			moreThanFive = true
-			break
-		}
-		recommendersString = fmt.Sprintf("%s\n%s", recommendersString, recommendedBy)
-	}
-	if moreThanFive {
-		recommendersString = fmt.Sprintf("%s\n%s", recommendersString, "...and more!")
-	}
-	tootMessage := fmt.Sprintf("#CoSoRadio for %s!\n%s\n\nFeaturing music recommendations from: %s",
-		dateString,
-		spotifyPlaylist,
-		recommendersString)
-	log.Println(tootMessage)
+func TootSongs(songs []spotify.Song, content string) error {
+	content = tools.TruncateString(content, 500)
+	log.Println(content)
 	return errors.New("TootSongs: Not Yet Implemented")
 }

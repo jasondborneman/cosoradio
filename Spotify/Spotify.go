@@ -6,13 +6,14 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 
 	tools "github.com/jasondborneman/cosoradio/Tools"
 	spotifyapi "github.com/zmb3/spotify/v2"
 )
 
-func CreatePlaylist(client spotifyapi.Client, ctx context.Context, songs []Song) (string, error) {
+func CreatePlaylist(client spotifyapi.Client, ctx context.Context, songs []Song, recommenders string) (string, error) {
 	var playlistUrl string
 	user, err := client.CurrentUser(ctx)
 	if err != nil {
@@ -22,8 +23,12 @@ func CreatePlaylist(client spotifyapi.Client, ctx context.Context, songs []Song)
 	t := time.Now()
 	dateString := t.Format("01-02-2006")
 	playlistName := fmt.Sprintf("CoSoRadio [Testing] %s", dateString)
-	playlistDescription := fmt.Sprintf("The counter.social #CoSoRadio playlist for %s", dateString)
+	recommenders = strings.Replace(recommenders, "\n", ",", -1)
+	recommenders = strings.TrimPrefix(recommenders, ",")
+	playlistDescription := fmt.Sprintf("The counter.social #CoSoRadio playlist for %s.  Featuring recommendations from: %s", dateString, recommenders)
+	playlistDescription = tools.TruncateString(playlistDescription, 300)
 	fullPlaylist, err := client.CreatePlaylistForUser(ctx, user.ID, playlistName, playlistDescription, true, false)
+
 	if err != nil {
 		log.Printf("Error creating playlist %v", err)
 		return "", err
@@ -61,7 +66,7 @@ func CreatePlaylist(client spotifyapi.Client, ctx context.Context, songs []Song)
 
 	log.Printf("-------------------------------------------------")
 	log.Printf("Spotify Playlist Name: %s", fullPlaylist.Name)
-	log.Printf("Spotify Playlist Description: %s", fullPlaylist.Name)
+	log.Printf("Spotify Playlist Description: %s", fullPlaylist.Description)
 	log.Printf("fullPlaylist Url: %v", playlistUrl)
 	log.Printf("-------------------------------------------------")
 	log.Printf("Taking you to the playlist!")
