@@ -1,8 +1,8 @@
 package spotify
 
 type Song struct {
-	Artist        string
-	Name          string
+	YouTubeUrl    string
 	YouTubeTitle  string
 	RecommendedBy string
+	YouTubeTags   []string
 }

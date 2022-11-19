@@ -23,8 +23,8 @@ func CreatePlaylist(client spotifyapi.Client, ctx context.Context, songs []Song,
 	t := time.Now()
 	dateString := t.Format("01-02-2006")
 	playlistName := fmt.Sprintf("CoSoRadio [Testing] %s", dateString)
-	recommenders = strings.Replace(recommenders, "\n", ",", -1)
-	recommenders = strings.TrimPrefix(recommenders, ",")
+	recommenders = strings.Replace(recommenders, "\n", ", ", -1)
+	recommenders = strings.TrimPrefix(recommenders, ", ")
 	playlistDescription := fmt.Sprintf("The counter.social #CoSoRadio playlist for %s.  Featuring recommendations from: %s", dateString, recommenders)
 	playlistDescription = tools.TruncateString(playlistDescription, 300)
 	fullPlaylist, err := client.CreatePlaylistForUser(ctx, user.ID, playlistName, playlistDescription, true, false)
@@ -47,28 +47,26 @@ func CreatePlaylist(client spotifyapi.Client, ctx context.Context, songs []Song,
 		return "", err
 	}
 
-	for i, song := range songs {
-		log.Printf("%d : %s, %s, %s", i, song.Artist, song.Name, song.YouTubeTitle)
+	var spotifyTrackIds []spotifyapi.ID
+	for _, song := range songs {
 		var searchQuery string
-		if song.YouTubeTitle == "" {
-			searchQuery = fmt.Sprintf("%s %s", song.Artist, song.Name)
-		} else {
-			searchQuery = fmt.Sprintf("%s", song.YouTubeTitle)
-		}
+		searchQuery = fmt.Sprintf("%s %s", song.YouTubeTitle, song.YouTubeTags[0])
 		searchResult, err := client.Search(ctx, searchQuery, spotifyapi.SearchTypeTrack)
 		if err != nil {
 			log.Printf("error searching Spotify: %v", err)
 			return "", err
 		}
 		topResult := searchResult.Tracks.Tracks[0]
-		client.AddTracksToPlaylist(ctx, fullPlaylist.ID, topResult.ID)
+		spotifyTrackIds = append(spotifyTrackIds, topResult.ID)
 	}
+	client.AddTracksToPlaylist(ctx, fullPlaylist.ID, spotifyTrackIds...)
 
-	log.Printf("-------------------------------------------------")
+	log.Printf("-----------------------------------------------------")
 	log.Printf("Spotify Playlist Name: %s", fullPlaylist.Name)
 	log.Printf("Spotify Playlist Description: %s", fullPlaylist.Description)
+	log.Printf("Number Of Tracks: %d", len(spotifyTrackIds))
 	log.Printf("fullPlaylist Url: %v", playlistUrl)
-	log.Printf("-------------------------------------------------")
+	log.Printf("-----------------------------------------------------")
 	log.Printf("Taking you to the playlist!")
 	exec.Command("open", playlistUrl).Start()
 	return playlistUrl, nil
