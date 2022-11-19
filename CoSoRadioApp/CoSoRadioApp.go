@@ -9,25 +9,11 @@ import (
 
 	coso "github.com/jasondborneman/cosoradio/CoSo"
 	spotify "github.com/jasondborneman/cosoradio/Spotify"
-	"github.com/mpvl/unique"
 	spotifyapi "github.com/zmb3/spotify/v2"
+	yt "google.golang.org/api/youtube/v3"
 )
 
-func Run(client spotifyapi.Client, scrapeCoSo bool, doToot bool) error {
-	fmt.Println("     ████                              ")
-	fmt.Println("   ██░░░░/█                            ")
-	fmt.Println("  ██░░░░/░░░██                          ")
-	fmt.Println("  ██░░░/░░░░██                          ")
-	fmt.Println("██░#CoSoRadio░██                        ")
-	fmt.Println("██░░░░░░░░░░░░██                        ")
-	fmt.Println("██░░░░░░░░░░░░██                        ")
-	fmt.Println("  ██░░░░░░░░██                          ")
-	fmt.Println("    ████████")
-	fmt.Println()
-	fmt.Println(fmt.Sprintf("----------] Scrape CoSo: %t", scrapeCoSo))
-	fmt.Println(fmt.Sprintf("----------] Do Toot: %t", doToot))
-	fmt.Println("-----------------------------------------")
-
+func Run(spotifyClient spotifyapi.Client, googleService yt.Service, scrapeCoSo bool, doToot bool) error {
 	var songs []spotify.Song
 	var err error
 	if scrapeCoSo {
@@ -40,7 +26,7 @@ func Run(client spotifyapi.Client, scrapeCoSo bool, doToot bool) error {
 	} else {
 		fmt.Println("Pulling Music From Fixture...")
 		fmt.Println("-----------------------------")
-		songs, err = coso.ReadSongsFromFixture()
+		songs, err = coso.ReadSongsFromFixture(googleService)
 		if err != nil {
 			return err
 		}
@@ -52,20 +38,24 @@ func Run(client spotifyapi.Client, scrapeCoSo bool, doToot bool) error {
 
 	t := time.Now()
 	dateString := t.Format("01-02-2006")
-	var uniqueRecommenders []string
-	for _, recommendedBy := range songs {
-		uniqueRecommenders = append(uniqueRecommenders, recommendedBy.RecommendedBy)
+
+	urs := make(map[string]bool)
+	for _, r := range songs {
+		urs[r.RecommendedBy] = true
 	}
-	unique.Strings(&uniqueRecommenders)
+
 	recommendersString := ""
 	moreThanFive := false
-	for i, recommendedBy := range uniqueRecommenders {
+	i := 0
+	for recommendedBy, _ := range urs {
 		if i > 5 {
 			moreThanFive = true
 			break
 		}
 		recommendersString = fmt.Sprintf("%s\n%s", recommendersString, recommendedBy)
+		i++
 	}
+
 	if moreThanFive {
 		recommendersString = fmt.Sprintf("%s\n%s", recommendersString, "...and more!")
 	}
@@ -76,7 +66,7 @@ func Run(client spotifyapi.Client, scrapeCoSo bool, doToot bool) error {
 	)
 
 	ctx := context.Background()
-	playlistUrl, err := spotify.CreatePlaylist(client, ctx, songs, recommendersString)
+	playlistUrl, err := spotify.CreatePlaylist(spotifyClient, ctx, songs, recommendersString)
 	if err != nil {
 		return err
 	}
