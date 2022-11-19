@@ -12,7 +12,14 @@ Runs: Locally (for now). Due to Spotify's authentication scheme, you're forced t
 ```
 $ cd cmd
 $ go build .
-$ SPOTIFY_ID=<SPOTIFY ID> SPOTIFY_SECRET=<SPOTIFY SECRET CSM_MAKE_PLAYLIST=true CSM_DO_TOOT=true CSM_SCRAPE_COSO=true ./cmd
+$ GOOGLE_ID=<GOOGLE ID> \
+  GOOGLE_SECRET=<GOOGLE SECRET> \
+  SPOTIFY_ID=<SPOTIFY ID> \
+  SPOTIFY_SECRET=<SPOTIFY SECRET> \
+  CSM_MAKE_PLAYLIST=true \
+  CSM_DO_TOOT=true \
+  CSM_SCRAPE_COSO=true \
+  ./cmd
 ```
 
 ### Workflow
@@ -35,8 +42,8 @@ Run this once a day. Eventually I'll see if I can't get it running once a day as
 
 * SPOTIFY_ID : The spotify ID [App set up with a redirect url of `http://localhost:8080/callback`]
 * SPOTIFY_SECRET : The spotify Secret
-* GOOGLE_SECRET : Google API Secret [Oauth2 with scope to read only from youtube api]
-* GOOGLE_DEVKEY: Google API Key
+* GOOGLE_ID : Google API Key ID [Oauth2 with scope to read only from youtube api]
+* GOOGLE_SECRET: Google API Secret
 
 **Coming Soon**
 
