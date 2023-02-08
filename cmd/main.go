@@ -24,6 +24,7 @@ const youtubeRedirectURI = "http://localhost:8080/youtube"
 
 const cosoRedirectURI = "http://localhost:8080/coso"
 const cosoRedirectURILocal = "urn:ietf:wg:oauth:2.0:oob"
+const cosoScopes = "read:search+read:statuses+write:statuses"
 
 var (
 	spotifyAuth = spotifyauth.New(spotifyauth.WithRedirectURL(spotifyRedirectURI), spotifyauth.WithScopes(
@@ -87,7 +88,7 @@ func main() {
 
 func StartCoSoAuthProcess() *string {
 	log.Println("COSO AUTH")
-	auth_url := fmt.Sprintf("https://counter.social/oauth/authorize?response_type=code&client_id=%s&redirect_uri=%s&scope=read:search+write:statuses", os.Getenv("COSO_CLIENT_KEY"), cosoRedirectURI)
+	auth_url := fmt.Sprintf("https://counter.social/oauth/authorize?response_type=code&client_id=%s&redirect_uri=%s&scope=%s", os.Getenv("COSO_CLIENT_KEY"), cosoRedirectURI, cosoScopes)
 	exec.Command("open", auth_url).Start()
 	token := <-chc
 	return &token
@@ -95,7 +96,7 @@ func StartCoSoAuthProcess() *string {
 
 func completeCoSoAuth(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code")
-	token_url := fmt.Sprintf("https://counter.social/oauth/token?grant_type=authorization_code&client_id=%s&client_secret=%s&redirect_uri=%s&scope=read:search+write:statuses&code=%s", os.Getenv("COSO_CLIENT_KEY"), os.Getenv("COSO_CLIENT_SECRET"), cosoRedirectURI, code)
+	token_url := fmt.Sprintf("https://counter.social/oauth/token?grant_type=authorization_code&client_id=%s&client_secret=%s&redirect_uri=%s&scope=%s&code=%s", os.Getenv("COSO_CLIENT_KEY"), os.Getenv("COSO_CLIENT_SECRET"), cosoRedirectURI, cosoScopes, code)
 	req, err := http.NewRequest("POST", token_url, nil)
 	if err != nil {
 		message := fmt.Sprintf("Error Getting CoSo Oauth Token [Create Request]: %v", err)

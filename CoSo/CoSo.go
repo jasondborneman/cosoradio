@@ -59,7 +59,7 @@ func AddYouTubeTitlesToSongs(googleService yt.Service, songs []spotify.Song) ([]
 func GetSongsFromCoSo(cosoToken string) ([]spotify.Song, error) {
 	// log.Printf("GetSongsFrmCoSo: Not Yet Implemented")
 	// return nil, errors.New("GetSongsFromCoSo: Not Yet Implemented")
-	search_url := "https://counter.social/api/v1/search?type=statuses&q=cosomusic"
+	search_url := "https://counter.social/api/v2/search?type=statuses&q=cosomusic&limit=1"
 	req, err := http.NewRequest("GET", search_url, nil)
 	if err != nil {
 		return nil, err
@@ -78,6 +78,7 @@ func GetSongsFromCoSo(cosoToken string) ([]spotify.Song, error) {
 		return nil, err
 	}
 	log.Println(string([]byte(body)))
+	// Make sure to only pick ones that have a youtube.com or youtu.be link in them.
 	return []spotify.Song{}, nil
 }
 
