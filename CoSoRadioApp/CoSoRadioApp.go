@@ -19,7 +19,7 @@ func Run(spotifyClient spotifyapi.Client, googleService yt.Service, cosoToken st
 	if scrapeCoSo {
 		fmt.Println("Scraping CoSo for #cosoradio...")
 		fmt.Println("-------------------------------")
-		songs, err = coso.GetSongsFromCoSo(cosoToken)
+		songs, err = coso.GetSongsFromCoSo(googleService, cosoToken)
 		if err != nil {
 			return err
 		}

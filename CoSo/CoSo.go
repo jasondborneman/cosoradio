@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 
 	spotify "github.com/jasondborneman/cosoradio/Spotify"
 	tools "github.com/jasondborneman/cosoradio/Tools"
@@ -56,9 +57,24 @@ func AddYouTubeTitlesToSongs(googleService yt.Service, songs []spotify.Song) ([]
 	return retval, nil
 }
 
-func GetSongsFromCoSo(cosoToken string) ([]spotify.Song, error) {
-	// log.Printf("GetSongsFrmCoSo: Not Yet Implemented")
-	// return nil, errors.New("GetSongsFromCoSo: Not Yet Implemented")
+func GetSongsFromCoSo(service yt.Service, cosoToken string) ([]spotify.Song, error) {
+	retval, err := GetSongsFromCoSoTimeline(cosoToken)
+	if err != nil {
+		return nil, err
+	}
+	if len(retval) == 0 {
+		err = errors.New("0 songs returned from CoSo")
+		return nil, err
+	}
+	songs, err := AddYouTubeTitlesToSongs(service, retval)
+	if err != nil {
+		log.Printf("Error adding youtube title to song struct: %v", err)
+		return nil, err
+	}
+	return songs, nil
+}
+
+func GetSongsFromCoSoSearch(cosoToken string) ([]spotify.Song, error) {
 	search_url := "https://counter.social/api/v2/search?type=statuses&q=cosomusic&limit=1"
 	req, err := http.NewRequest("GET", search_url, nil)
 	if err != nil {
@@ -80,6 +96,41 @@ func GetSongsFromCoSo(cosoToken string) ([]spotify.Song, error) {
 	log.Println(string([]byte(body)))
 	// Make sure to only pick ones that have a youtube.com or youtu.be link in them.
 	return []spotify.Song{}, nil
+}
+
+func GetSongsFromCoSoTimeline(cosoToken string) ([]spotify.Song, error) {
+	timeline_url := "https://counter.social/api/v1/timelines/tag/cosomusic?limit=50"
+	req, err := http.NewRequest("GET", timeline_url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", cosoToken))
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Println("Error on response from GetSongsFromCoSo Search.\n[ERROR] -", err)
+		return nil, err
+	}
+	defer resp.Body.Close()
+	// Make sure to only pick ones that have a youtube.com or youtu.be link in them.
+	var statuses_unfiltered TimelineStatus
+	var retval []spotify.Song
+	decoder := json.NewDecoder(resp.Body)
+	err = decoder.Decode(&statuses_unfiltered)
+	if err != nil {
+		message := fmt.Sprintf("Error Parsing CoSo Timeline Response: %v", err)
+		log.Println(message)
+		return nil, err
+	}
+	for _, status := range statuses_unfiltered {
+		if status.Card.URL != "" && (strings.Contains(status.Card.URL, "youtube.com") || strings.Contains(status.Card.URL, "youtu.be")) {
+			s := spotify.Song{}
+			s.RecommendedBy = status.Account.Username
+			s.YouTubeUrl = status.Card.URL
+			retval = append(retval, s)
+		}
+	}
+	return retval, nil
 }
 
 func TootSongs(songs []spotify.Song, content string, cosoToken string) error {
