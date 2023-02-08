@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -21,6 +22,9 @@ import (
 const spotifyRedirectURI = "http://localhost:8080/callback"
 const youtubeRedirectURI = "http://localhost:8080/youtube"
 
+const cosoRedirectURI = "http://localhost:8080/coso"
+const cosoRedirectURILocal = "urn:ietf:wg:oauth:2.0:oob"
+
 var (
 	spotifyAuth = spotifyauth.New(spotifyauth.WithRedirectURL(spotifyRedirectURI), spotifyauth.WithScopes(
 		spotifyauth.ScopeUserReadPrivate,
@@ -28,6 +32,7 @@ var (
 		spotifyauth.ScopeImageUpload))
 	chs   = make(chan *spotifyapi.Client)
 	chg   = make(chan string)
+	chc   = make(chan string)
 	state = "abc123"
 )
 
@@ -51,6 +56,7 @@ func main() {
 	log.Println("Starting HTTP server for auth callbacks...")
 	http.HandleFunc("/callback", completeSpotifyAuth)
 	http.HandleFunc("/youtube", completeYoutubeAuth)
+	http.HandleFunc("/coso", completeCoSoAuth)
 	go func() {
 		err := http.ListenAndServe(":8080", nil)
 		if err != nil {
@@ -68,12 +74,50 @@ func main() {
 		log.Printf("Error Creating Google API Service: %v", err)
 	}
 
+	var cosoToken *string
+	cosoToken = StartCoSoAuthProcess()
+
 	os.Mkdir("Images/Temp/", 0755)
 	defer os.RemoveAll("Images/Temp/")
-	err = csm.Run(*spotifyClient, *googleService, scrapeCoSo, doToot)
+	err = csm.Run(*spotifyClient, *googleService, *cosoToken, scrapeCoSo, doToot)
 	if err != nil {
 		log.Printf("Error running the application: %v", err)
 	}
+}
+
+func StartCoSoAuthProcess() *string {
+	log.Println("COSO AUTH")
+	auth_url := fmt.Sprintf("https://counter.social/oauth/authorize?response_type=code&client_id=%s&redirect_uri=%s&scope=read:search+write:statuses", os.Getenv("COSO_CLIENT_KEY"), cosoRedirectURI)
+	exec.Command("open", auth_url).Start()
+	token := <-chc
+	return &token
+}
+
+func completeCoSoAuth(w http.ResponseWriter, r *http.Request) {
+	code := r.URL.Query().Get("code")
+	token_url := fmt.Sprintf("https://counter.social/oauth/token?grant_type=authorization_code&client_id=%s&client_secret=%s&redirect_uri=%s&scope=read:search+write:statuses&code=%s", os.Getenv("COSO_CLIENT_KEY"), os.Getenv("COSO_CLIENT_SECRET"), cosoRedirectURI, code)
+	req, err := http.NewRequest("POST", token_url, nil)
+	if err != nil {
+		message := fmt.Sprintf("Error Getting CoSo Oauth Token [Create Request]: %v", err)
+		log.Fatal(message)
+	}
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		message := fmt.Sprintf("Error Getting CoSo Oauth Token [Make Request]: %v", err)
+		log.Fatal(message)
+	}
+	defer resp.Body.Close()
+	decoder := json.NewDecoder(resp.Body)
+	var tokenResponse CoSoTokenResponse
+	err = decoder.Decode(&tokenResponse)
+	if err != nil {
+		message := fmt.Sprintf("Error Parsing CoSo Token Response: %v", err)
+		log.Fatal(message)
+	}
+	fmt.Println("COSO AUTH COMPLETE")
+	fmt.Println(tokenResponse.AccessToken)
+	chc <- tokenResponse.AccessToken
 }
 
 func StartSpotifyAuthProcess() *spotifyapi.Client {
@@ -100,6 +144,7 @@ func completeSpotifyAuth(w http.ResponseWriter, r *http.Request) {
 
 	// use the token to get an authenticated client
 	client := spotifyapi.New(spotifyAuth.Client(r.Context(), tok))
+	log.Printf("SPOTIFY AUTH COMPLETE")
 	chs <- client
 }
 
@@ -170,4 +215,11 @@ func getGoogleTokenFromWeb(config *oauth2.Config) *oauth2.Token {
 		log.Fatalf("Unable to retrieve token from web %v", err)
 	}
 	return tok
+}
+
+type CoSoTokenResponse struct {
+	AccessToken string `json:"access_token"`
+	TokenType   string `json:"token_type"`
+	Scope       string `json:"scope"`
+	CreatedAt   int    `json:"created_at"`
 }

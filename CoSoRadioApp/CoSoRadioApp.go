@@ -13,13 +13,13 @@ import (
 	yt "google.golang.org/api/youtube/v3"
 )
 
-func Run(spotifyClient spotifyapi.Client, googleService yt.Service, scrapeCoSo bool, doToot bool) error {
+func Run(spotifyClient spotifyapi.Client, googleService yt.Service, cosoToken string, scrapeCoSo bool, doToot bool) error {
 	var songs []spotify.Song
 	var err error
 	if scrapeCoSo {
 		fmt.Println("Scraping CoSo for #cosoradio...")
 		fmt.Println("-------------------------------")
-		songs, err = coso.GetSongsFromCoSo()
+		songs, err = coso.GetSongsFromCoSo(cosoToken)
 		if err != nil {
 			return err
 		}
@@ -72,7 +72,7 @@ func Run(spotifyClient spotifyapi.Client, googleService yt.Service, scrapeCoSo b
 	}
 	if doToot {
 		tootMessage = strings.Replace(tootMessage, "XXXX", playlistUrl, 1)
-		err = coso.TootSongs(songs, tootMessage)
+		err = coso.TootSongs(songs, tootMessage, cosoToken)
 		if err != nil {
 			return err
 		}
