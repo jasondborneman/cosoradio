@@ -40,6 +40,7 @@ var (
 func main() {
 	scrapeCoSo := os.Getenv("CSM_SCRAPE_COSO") == "true"
 	doToot := os.Getenv("CSM_DO_TOOT") == "true"
+	createPlaylist := os.Getenv("CSM_MAKE_PLAYLIST") == "true"
 
 	log.Println("     ████                              ")
 	log.Println("   ██░░░░/█                            ")
@@ -80,7 +81,7 @@ func main() {
 
 	os.Mkdir("Images/Temp/", 0755)
 	defer os.RemoveAll("Images/Temp/")
-	err = csm.Run(*spotifyClient, *googleService, *cosoToken, scrapeCoSo, doToot)
+	err = csm.Run(*spotifyClient, *googleService, *cosoToken, scrapeCoSo, doToot, createPlaylist)
 	if err != nil {
 		log.Printf("Error running the application: %v", err)
 	}

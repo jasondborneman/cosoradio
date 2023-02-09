@@ -124,6 +124,7 @@ func GetSongsFromCoSoTimeline(cosoToken string) ([]spotify.Song, error) {
 		log.Println(message)
 		return nil, err
 	}
+	fmt.Printf("\tStatus Count: %d\n", len(statuses_unfiltered))
 	for _, status := range statuses_unfiltered {
 		if status.Card.URL != "" && (strings.Contains(status.Card.URL, "youtube.com") || strings.Contains(status.Card.URL, "youtu.be")) {
 			s := spotify.Song{}
@@ -163,7 +164,5 @@ func TootSongs(songs []spotify.Song, content string, cosoToken string) error {
 		log.Printf("Non-200 Status Code posting Toot\n[%d] [RESPONSE]\n%s\n", resp.StatusCode, string(body))
 		return errors.New(fmt.Sprintf("Non-200 Status Code:%d", resp.StatusCode))
 	}
-	body, err := ioutil.ReadAll(resp.Body)
-	fmt.Println(string(body))
 	return nil
 }

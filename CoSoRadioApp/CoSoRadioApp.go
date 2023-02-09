@@ -13,7 +13,7 @@ import (
 	yt "google.golang.org/api/youtube/v3"
 )
 
-func Run(spotifyClient spotifyapi.Client, googleService yt.Service, cosoToken string, scrapeCoSo bool, doToot bool) error {
+func Run(spotifyClient spotifyapi.Client, googleService yt.Service, cosoToken string, scrapeCoSo bool, doToot bool, createPlaylist bool) error {
 	var songs []spotify.Song
 	var err error
 	if scrapeCoSo {
@@ -65,19 +65,21 @@ func Run(spotifyClient spotifyapi.Client, googleService yt.Service, cosoToken st
 		"XXXX",
 	)
 
-	ctx := context.Background()
-	playlistUrl, err := spotify.CreatePlaylist(spotifyClient, ctx, songs, recommendersString)
-	if err != nil {
-		return err
-	}
-	if doToot {
-		tootMessage = strings.Replace(tootMessage, "XXXX", playlistUrl, 1)
-		err = coso.TootSongs(songs, tootMessage, cosoToken)
+	if createPlaylist {
+		ctx := context.Background()
+		playlistUrl, err := spotify.CreatePlaylist(spotifyClient, ctx, songs, recommendersString)
 		if err != nil {
 			return err
 		}
-	} else {
-		fmt.Println("Made a playlist, but not tooting to CoSO")
+		if doToot {
+			tootMessage = strings.Replace(tootMessage, "XXXX", playlistUrl, 1)
+			err = coso.TootSongs(songs, tootMessage, cosoToken)
+			if err != nil {
+				return err
+			}
+		} else {
+			fmt.Println("Made a playlist, but not tooting to CoSO")
+		}
 	}
 	return nil
 }
