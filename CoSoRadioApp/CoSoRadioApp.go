@@ -52,14 +52,14 @@ func Run(spotifyClient spotifyapi.Client, googleService yt.Service, cosoToken st
 			moreThanFive = true
 			break
 		}
-		recommendersString = fmt.Sprintf("%s\n%s", recommendersString, recommendedBy)
+		recommendersString = fmt.Sprintf("%s, %s", recommendersString, "@"+recommendedBy)
 		i++
 	}
 
 	if moreThanFive {
-		recommendersString = fmt.Sprintf("%s\n%s", recommendersString, "...and more!")
+		recommendersString = fmt.Sprintf("%s %s", recommendersString, "...and more!")
 	}
-	tootMessage := fmt.Sprintf("#CoSoRadio for %s!\n\nFeaturing music recommendations from: %s\n\n%s",
+	tootMessage := fmt.Sprintf("#CoSoRadio for %s! Featuring music recommendations from: %s. %s",
 		dateString,
 		recommendersString,
 		"XXXX",

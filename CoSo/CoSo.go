@@ -7,8 +7,10 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"strings"
 
+	"github.com/google/uuid"
 	spotify "github.com/jasondborneman/cosoradio/Spotify"
 	tools "github.com/jasondborneman/cosoradio/Tools"
 	youtube "github.com/jasondborneman/cosoradio/YouTube"
@@ -108,7 +110,7 @@ func GetSongsFromCoSoTimeline(cosoToken string) ([]spotify.Song, error) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Println("Error on response from GetSongsFromCoSo Search.\n[ERROR] -", err)
+		log.Printf("Error on response from GetSongsFromCoSo Search.\n[ERROR] - %s\n", err)
 		return nil, err
 	}
 	defer resp.Body.Close()
@@ -135,5 +137,33 @@ func GetSongsFromCoSoTimeline(cosoToken string) ([]spotify.Song, error) {
 
 func TootSongs(songs []spotify.Song, content string, cosoToken string) error {
 	content = tools.TruncateString(content, 500)
-	return errors.New("TootSongs: Not Yet Implemented")
+	fmt.Println(content)
+	fmt.Println("TOOTING...")
+	toot_url := fmt.Sprintf("https://counter.social/api/v1/statuses?status=%s", url.QueryEscape(content))
+	req, err := http.NewRequest("POST", toot_url, nil)
+	if err != nil {
+		log.Printf("Error creating new POST request to toot.\n[ERROR] - %s\n", err)
+		return err
+	}
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", cosoToken))
+	req.Header.Add("Idempotency-Key", uuid.New().String())
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Printf("Error on response from Post Toot.\n[ERROR] - %s\n", err)
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Printf("Error reading response body.\n[ERROR] - %s\n", err)
+			return err
+		}
+		log.Printf("Non-200 Status Code posting Toot\n[%d] [RESPONSE]\n%s\n", resp.StatusCode, string(body))
+		return errors.New(fmt.Sprintf("Non-200 Status Code:%d", resp.StatusCode))
+	}
+	body, err := ioutil.ReadAll(resp.Body)
+	fmt.Println(string(body))
+	return nil
 }

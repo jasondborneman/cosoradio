@@ -22,7 +22,7 @@ func CreatePlaylist(client spotifyapi.Client, ctx context.Context, songs []Song,
 	}
 	t := time.Now()
 	dateString := t.Format("01-02-2006")
-	playlistName := fmt.Sprintf("CoSoRadio [Testing] %s", dateString)
+	playlistName := fmt.Sprintf("CoSoRadio for %s", dateString)
 	recommenders = strings.Replace(recommenders, "\n", ", ", -1)
 	recommenders = strings.TrimPrefix(recommenders, ", ")
 	playlistDescription := fmt.Sprintf("The counter.social #CoSoRadio playlist for %s.  Featuring recommendations from: %s", dateString, recommenders)
