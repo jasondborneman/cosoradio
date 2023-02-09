@@ -13,13 +13,13 @@ import (
 	yt "google.golang.org/api/youtube/v3"
 )
 
-func Run(spotifyClient spotifyapi.Client, googleService yt.Service, scrapeCoSo bool, doToot bool) error {
+func Run(spotifyClient spotifyapi.Client, googleService yt.Service, cosoToken string, scrapeCoSo bool, doToot bool, createPlaylist bool) error {
 	var songs []spotify.Song
 	var err error
 	if scrapeCoSo {
 		fmt.Println("Scraping CoSo for #cosoradio...")
 		fmt.Println("-------------------------------")
-		songs, err = coso.GetSongsFromCoSo()
+		songs, err = coso.GetSongsFromCoSo(googleService, cosoToken)
 		if err != nil {
 			return err
 		}
@@ -52,32 +52,34 @@ func Run(spotifyClient spotifyapi.Client, googleService yt.Service, scrapeCoSo b
 			moreThanFive = true
 			break
 		}
-		recommendersString = fmt.Sprintf("%s\n%s", recommendersString, recommendedBy)
+		recommendersString = fmt.Sprintf("%s, %s", recommendersString, "@"+recommendedBy)
 		i++
 	}
 
 	if moreThanFive {
-		recommendersString = fmt.Sprintf("%s\n%s", recommendersString, "...and more!")
+		recommendersString = fmt.Sprintf("%s %s", recommendersString, "...and more!")
 	}
-	tootMessage := fmt.Sprintf("#CoSoRadio for %s!\n\nFeaturing music recommendations from: %s\n\n%s",
+	tootMessage := fmt.Sprintf("#CoSoRadio for %s! Featuring music recommendations from: %s. %s",
 		dateString,
 		recommendersString,
 		"XXXX",
 	)
 
-	ctx := context.Background()
-	playlistUrl, err := spotify.CreatePlaylist(spotifyClient, ctx, songs, recommendersString)
-	if err != nil {
-		return err
-	}
-	if doToot {
-		tootMessage = strings.Replace(tootMessage, "XXXX", playlistUrl, 1)
-		err = coso.TootSongs(songs, tootMessage)
+	if createPlaylist {
+		ctx := context.Background()
+		playlistUrl, err := spotify.CreatePlaylist(spotifyClient, ctx, songs, recommendersString)
 		if err != nil {
 			return err
 		}
-	} else {
-		fmt.Println("Made a playlist, but not tooting to CoSO")
+		if doToot {
+			tootMessage = strings.Replace(tootMessage, "XXXX", playlistUrl, 1)
+			err = coso.TootSongs(songs, tootMessage, cosoToken)
+			if err != nil {
+				return err
+			}
+		} else {
+			fmt.Println("Made a playlist, but not tooting to CoSO")
+		}
 	}
 	return nil
 }

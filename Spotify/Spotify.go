@@ -22,7 +22,7 @@ func CreatePlaylist(client spotifyapi.Client, ctx context.Context, songs []Song,
 	}
 	t := time.Now()
 	dateString := t.Format("01-02-2006")
-	playlistName := fmt.Sprintf("CoSoRadio [Testing] %s", dateString)
+	playlistName := fmt.Sprintf("CoSoRadio for %s", dateString)
 	recommenders = strings.Replace(recommenders, "\n", ", ", -1)
 	recommenders = strings.TrimPrefix(recommenders, ", ")
 	playlistDescription := fmt.Sprintf("The counter.social #CoSoRadio playlist for %s.  Featuring recommendations from: %s", dateString, recommenders)
@@ -41,6 +41,10 @@ func CreatePlaylist(client spotifyapi.Client, ctx context.Context, songs []Song,
 		return "", err
 	}
 	pngWithLabel, err := tools.AddDateToThumbnail(png, dateString, 1, 13)
+	if err != nil {
+		log.Printf("Error creating playslist thumbnail: %v", err)
+		return "", err
+	}
 	err = client.SetPlaylistImage(ctx, fullPlaylist.ID, pngWithLabel)
 	if err != nil {
 		log.Printf("Error adding thumbnail to playlist: %v", err)
@@ -49,8 +53,11 @@ func CreatePlaylist(client spotifyapi.Client, ctx context.Context, songs []Song,
 
 	var spotifyTrackIds []spotifyapi.ID
 	for _, song := range songs {
-		var searchQuery string
-		searchQuery = fmt.Sprintf("%s %s", song.YouTubeTitle, song.YouTubeTags[0])
+		tag_query := ""
+		if len(song.YouTubeTags) > 0 {
+			tag_query = song.YouTubeTags[0]
+		}
+		searchQuery := fmt.Sprintf("%s %s", song.YouTubeTitle, tag_query)
 		searchResult, err := client.Search(ctx, searchQuery, spotifyapi.SearchTypeTrack)
 		if err != nil {
 			log.Printf("error searching Spotify: %v", err)

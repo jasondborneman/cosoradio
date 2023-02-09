@@ -3,6 +3,7 @@ package youtube
 import (
 	"log"
 	"net/url"
+	"strings"
 
 	yt "google.golang.org/api/youtube/v3"
 )
@@ -37,5 +38,10 @@ func GetVideoIdFromUrl(urlStr string) (string, error) {
 	if err != nil {
 		log.Printf("Error Parsing query string: %v", err)
 	}
-	return params["v"][0], nil
+	if strings.Contains(urlStr, "watch?v") {
+		return params["v"][0], nil
+	} else {
+		splits := strings.Split(urlStr, "/")
+		return splits[len(splits)-1], nil
+	}
 }
