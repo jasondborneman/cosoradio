@@ -101,7 +101,7 @@ func GetSongsFromCoSoSearch(cosoToken string) ([]spotify.Song, error) {
 }
 
 func GetSongsFromCoSoTimeline(cosoToken string) ([]spotify.Song, error) {
-	timeline_url := "https://counter.social/api/v1/timelines/tag/cosomusic?limit=50"
+	timeline_url := "https://counter.social/api/v1/timelines/tag/cosomusic?limit=100"
 	req, err := http.NewRequest("GET", timeline_url, nil)
 	if err != nil {
 		return nil, err
