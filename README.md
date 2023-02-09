@@ -1,12 +1,12 @@
 # CoSoRadio
-TL;DR: Eventualyl this will scrape [counter.social](https://counter.social) firehose for posts using the `#CoSoMusic` hashtag. For each one, ff they have a YouTube link as well, get the Title from the YouTube video and then add the song to a public Spotify playlist and share it out on CoSo.
+Scrapes [counter.social](https://counter.social) firehose for posts using the `#CoSoMusic` hashtag. For each one, ff they have a YouTube link as well, get the Title (and tags, if any) from the YouTube video and then add the song to a public Spotify playlist and share it out on CoSo.
 
 ## TechStack
 Language: Golang
 
-APIs: Spotify, YouTube [Future: counter.social]
+APIs: Spotify, YouTube, counter.social
 
-Runs: Locally (for now). Due to Spotify's authentication scheme, you're forced through a web login. There's no way to do a "headless" API integration with spotify that I've found yet. More research needed into that for both Spotify and Google APIs.
+Runs: Locally (for now). Due to OAuth authentication scheme, you're forced through a web login. There's no way to do a "headless" API integration with spotify that I've found yet. More research needed into that for both Spotify, Google & CoSo APIs.
 
 ## Build and Run
 ```
