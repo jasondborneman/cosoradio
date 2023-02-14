@@ -46,6 +46,7 @@ func AddYouTubeTitlesToSongs(googleService yt.Service, songs []spotify.Song) ([]
 		title, tags, err := youtube.GetTitleFromVideo(googleService, song.YouTubeUrl)
 		if err != nil {
 			log.Printf("Error getting title from video %v", err)
+			continue
 		}
 		log.Printf("%d : %s : %s", i, title, song.YouTubeUrl)
 		updatedSong := spotify.Song{

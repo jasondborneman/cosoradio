@@ -1,6 +1,7 @@
 package youtube
 
 import (
+	"errors"
 	"log"
 	"net/url"
 	"strings"
@@ -11,7 +12,7 @@ import (
 func GetTitleFromVideo(service yt.Service, url string) (string, []string, error) {
 	vId, err := GetVideoIdFromUrl(url)
 	if err != nil {
-		log.Printf("Error getting Video ID from URL %s: %v", url, err)
+		log.Printf("\nError getting Video ID from URL %s: %v\n", url, err)
 		return "", nil, err
 	}
 
@@ -22,10 +23,16 @@ func GetTitleFromVideo(service yt.Service, url string) (string, []string, error)
 	call := service.Videos.List(part).Id(vId)
 	resp, err := call.Do()
 	if err != nil {
-		log.Printf("Error getting video id [%s] from yt api: %v", vId, err)
+		log.Printf("\nError getting video id [%s] from yt api: %v\n", vId, err)
 		return "", nil, err
 	}
-	return resp.Items[0].Snippet.Title, resp.Items[0].Snippet.Tags, nil
+	if len(resp.Items) == 0 {
+		message := "\nno items from GetTitleFromVideo response"
+		log.Println(message)
+		return "", nil, errors.New(message)
+	} else {
+		return resp.Items[0].Snippet.Title, resp.Items[0].Snippet.Tags, nil
+	}
 }
 
 func GetVideoIdFromUrl(urlStr string) (string, error) {
