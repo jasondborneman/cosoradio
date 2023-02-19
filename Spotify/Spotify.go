@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
 	"os/exec"
 	"strings"
 	"time"
@@ -35,21 +34,22 @@ func CreatePlaylist(client spotifyapi.Client, ctx context.Context, songs []Song,
 	}
 	playlistUrl = string(fullPlaylist.ExternalURLs["spotify"])
 
-	png, err := os.Open("Images/cosoradio.png")
-	if err != nil {
-		log.Printf("Error opening thumbnail for playlist: %v", err)
-		return "", err
-	}
-	pngWithLabel, err := tools.AddDateToThumbnail(png, dateString, 1, 13)
-	if err != nil {
-		log.Printf("Error creating playslist thumbnail: %v", err)
-		return "", err
-	}
-	err = client.SetPlaylistImage(ctx, fullPlaylist.ID, pngWithLabel)
-	if err != nil {
-		log.Printf("Error adding thumbnail to playlist: %v", err)
-		return "", err
-	}
+	// Playlist Thumbnail seems to be failing again for some reason. Takingit out for now.
+	// png, err := os.Open("Images/cosoradio.png")
+	// if err != nil {
+	// 	log.Printf("Error opening thumbnail for playlist: %v", err)
+	// 	return "", err
+	// }
+	// pngWithLabel, err := tools.AddDateToThumbnail(png, dateString, 1, 13)
+	// if err != nil {
+	// 	log.Printf("Error creating playslist thumbnail: %v", err)
+	// 	return "", err
+	// }
+	// err = client.SetPlaylistImage(ctx, fullPlaylist.ID, pngWithLabel)
+	// if err != nil {
+	// 	log.Printf("Error adding thumbnail to playlist: %v", err)
+	// 	return "", err
+	// }
 
 	var spotifyTrackIds []spotifyapi.ID
 	for _, song := range songs {
