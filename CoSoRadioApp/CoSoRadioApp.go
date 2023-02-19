@@ -45,15 +45,22 @@ func Run(spotifyClient spotifyapi.Client, googleService yt.Service, cosoToken st
 	}
 
 	recommendersString := ""
+	var Empty struct{}
+	exclusionList := make(map[string]struct{})
+	exclusionList["MisterE"] = Empty
 	moreThanFive := false
 	i := 0
-	for recommendedBy, _ := range urs {
+	for recommendedBy := range urs {
 		if i > 5 {
 			moreThanFive = true
 			break
 		}
-		recommendersString = fmt.Sprintf("%s, %s", recommendersString, "@"+recommendedBy)
-		i++
+		if _, found := exclusionList[recommendedBy]; !found {
+			recommendersString = fmt.Sprintf("%s, %s", recommendersString, "@"+recommendedBy)
+			i++
+		} else {
+			fmt.Printf("\t[%s] excluded from recommended by string", recommendedBy)
+		}
 	}
 
 	if moreThanFive {
