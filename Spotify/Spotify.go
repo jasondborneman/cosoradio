@@ -60,14 +60,15 @@ func CreatePlaylist(client spotifyapi.Client, ctx context.Context, songs []Song,
 		searchQuery := fmt.Sprintf("%s %s", song.YouTubeTitle, tag_query)
 		searchResult, err := client.Search(ctx, searchQuery, spotifyapi.SearchTypeTrack)
 		if err != nil {
-			log.Printf("error searching Spotify: %v", err)
-			return "", err
+			log.Printf("error searching Spotify [query: %s]: %v", searchQuery, err)
+			continue
 		}
 		if len(searchResult.Tracks.Tracks) > 0 {
 			topResult := searchResult.Tracks.Tracks[0]
 			spotifyTrackIds = append(spotifyTrackIds, topResult.ID)
 		} else {
 			log.Printf("\tNo tracks found for [%s]\n", song.YouTubeTitle)
+			continue
 		}
 	}
 	client.AddTracksToPlaylist(ctx, fullPlaylist.ID, spotifyTrackIds...)
